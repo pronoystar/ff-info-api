@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler
-import json
 from urllib.parse import urlparse, parse_qs
+import json
 
 
 class handler(BaseHTTPRequestHandler):
@@ -10,18 +10,16 @@ class handler(BaseHTTPRequestHandler):
         uid = query.get("uid", [None])[0]
 
         if not uid:
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-
-            self.wfile.write(json.dumps({
+            self.send_json({
                 "success": False,
                 "error": "UID is required",
                 "example": "/api/info?uid=123456789"
-            }).encode())
+            }, 400)
             return
 
-        response = {
+        # Temporary response
+        # Real Free Fire data source will be connected later.
+        data = {
             "success": True,
             "uid": uid,
             "nickname": "Unknown",
@@ -29,11 +27,17 @@ class handler(BaseHTTPRequestHandler):
             "region": None,
             "likes": None,
             "rank": None,
-            "message": "FF data source not connected yet"
+            "message": "Free Fire data source not connected yet"
         }
 
-        self.send_response(200)
+        self.send_json(data, 200)
+
+    def send_json(self, data, status):
+        body = json.dumps(data, ensure_ascii=False)
+
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
 
-        self.wfile.write(json.dumps(response).encode())
+        self.wfile.write(body.encode("utf-8"))
